@@ -20,6 +20,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.android.personal.kilojouletracker.R
+import com.android.personal.kilojouletracker.api.FatSecretApi
+import retrofit2.Retrofit
+import retrofit2.create
 
 const val HOME_SCREEN_ROUTE = "HomeScreen"
 const val LOG_MEAL_SCREEN_ROUTE = "LogMealScreen"
@@ -103,11 +106,12 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
     var servingSizeText: String by remember { mutableStateOf("0.0") }
     var numCaloriesText: String by remember { mutableStateOf("0.0") }
 
+    val retrofit: Retrofit = Retrofit.Builder().baseUrl("https://platform.fatsecret.com/rest/").build()
+    val fatSecretApi = retrofit.create<FatSecretApi>()
+
     Box(modifier = modifier)
     {
-        Column(modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(20.dp))
+        Column(modifier = Modifier.align(Alignment.TopCenter).padding(20.dp))
         {
             TextField(value = mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
@@ -122,26 +126,12 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
             TextField(value = servingSizeText, label = {Text("Enter the Serving Size (grams)")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
                 text -> servingSizeText = text
-                try
-                {
-                    logMealViewModel.servingSizeText = servingSizeText.toDouble()
-                }
-                catch(e: NumberFormatException)
-                {
-                    Toast.makeText(context, "Enter a numerical value!", Toast.LENGTH_LONG).show()
-                }
+                logMealViewModel.servingSizeText = servingSizeText
             })
             TextField(value = numCaloriesText, label = {Text("Enter the number of Calories")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
                 text -> numCaloriesText = text
-                try
-                {
-                    logMealViewModel.numCaloriesText = servingSizeText.toDouble()
-                }
-                catch(e: NumberFormatException)
-                {
-                    Toast.makeText(context, "Enter a numerical value!", Toast.LENGTH_LONG).show()
-                }
+                logMealViewModel.numCaloriesText = servingSizeText
             })
         }
         Button(onClick = {navigationController.navigate(HOME_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.BottomEnd))

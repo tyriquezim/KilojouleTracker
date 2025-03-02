@@ -6,6 +6,9 @@ class LogMealViewModel: ViewModel()
 {
     var mealNameText: String = ""
     var mealTypeText: String = ""
-    var servingSizeText: Double = 0.0
-    var numCaloriesText: Double = 0.0
+    var servingSizeText: String = ""
+    var numCaloriesText: String = ""
+    var fatContentText: String = ""
+    var carbohydrateContentText: String = ""
+    var proteinContentText: String = ""
 }
