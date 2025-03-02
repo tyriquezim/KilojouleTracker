@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.android.personal.calorietracker"
+    namespace = "com.android.personal.kilojouletracker"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.android.personal.calorietracker"
+        applicationId = "com.android.personal.kilojouletracker"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

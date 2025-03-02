@@ -1,4 +1,4 @@
-package com.android.personal.calorietracker
+package com.android.personal.kilojouletracker
 
 import org.junit.Test
 

@@ -1,4 +1,4 @@
-package com.android.personal.calorietracker.ui.theme
+package com.android.personal.kilojouletracker.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

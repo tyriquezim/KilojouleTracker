@@ -1,4 +1,4 @@
-package com.android.personal.calorietracker.model
+package com.android.personal.kilojouletracker.model
 
 class Meal
 {
@@ -6,14 +6,14 @@ class Meal
     lateinit var mealName: String
     lateinit var mealType: String
     var servingSize = 0.0
-    var numCalories = 0.0
+    var numKilojoules = 0.0
 
-    constructor(mealName: String, mealType: String, servingSize: Double, numCalories: Double)
+    constructor(mealName: String, mealType: String, servingSize: Double, numKilojoules: Double)
     {
         this.mealName = mealName
         this.mealType = mealType
         this.servingSize = servingSize
-        this.numCalories = numCalories
+        this.numKilojoules = numKilojoules
 
         ++totalMealsCreated
     }

@@ -1,4 +1,4 @@
-package com.android.personal.calorietracker
+package com.android.personal.kilojouletracker
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.android.personal.kilojouletracker.R
 
 const val HOME_SCREEN_ROUTE = "HomeScreen"
 const val LOG_MEAL_SCREEN_ROUTE = "LogMealScreen"
@@ -69,20 +70,24 @@ fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Mod
     {
         Column(modifier = Modifier.align(Alignment.Center))
         {
-            Button(onClick = {navigationController.navigate(LOG_MEAL_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Button(onClick = {navigationController.navigate(LOG_MEAL_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 20.dp))
             {
+                Icon(painterResource(id = R.drawable.baseline_lunch_dining_24), contentDescription = "Log Meal Icon", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
                 Text("Log Meal")
             }
-            Button(onClick = {navigationController.navigate(VIEW_LOGGED_MEALS_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Button(onClick = {navigationController.navigate(VIEW_LOGGED_MEALS_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 20.dp))
             {
+                Icon(painterResource(id = R.drawable.baseline_list_24), contentDescription = "View Logged Meal Icon", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
                 Text("View Logged Meals")
             }
-            Button(onClick = {navigationController.navigate(DAILY_PROGRESS_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Button(onClick = {navigationController.navigate(DAILY_PROGRESS_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 20.dp))
             {
+                Icon(painterResource(id = R.drawable.baseline_stars_24), contentDescription = "Daily Progress Icon", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
                 Text("View Daily Progress")
             }
             Button(onClick = {navigationController.navigate(SETTINGS_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally))
             {
+                Icon(painterResource(id = R.drawable.baseline_settings_24), contentDescription = "Settings Icon", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
                 Text("Settings")
             }
         }
@@ -100,7 +105,9 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 
     Box(modifier = modifier)
     {
-        Column(modifier = Modifier.align(Alignment.TopCenter).padding(20.dp))
+        Column(modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(20.dp))
         {
             TextField(value = mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
@@ -139,6 +146,7 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
         }
         Button(onClick = {navigationController.navigate(HOME_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.BottomEnd))
         {
+            Icon(painterResource(id = R.drawable.baseline_arrow_back_24), contentDescription = "Back Arrow", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
             Text("Back")
         }
     }
