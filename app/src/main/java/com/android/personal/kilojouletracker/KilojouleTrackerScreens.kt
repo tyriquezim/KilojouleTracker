@@ -111,8 +111,8 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
     val context = LocalContext.current
     var mealNameText: String by remember { mutableStateOf("") }
     var mealTypeText: String by remember { mutableStateOf("") }
-    var servingSizeText: String by remember { mutableStateOf("0.0") }
-    var numCaloriesText: String by remember { mutableStateOf("0.0") }
+    var servingSizeText: String by remember { mutableStateOf("") }
+    var numCaloriesText: String by remember { mutableStateOf("") }
 
     LaunchedEffect(LocalLifecycleOwner.current.lifecycleScope)
     {
@@ -121,21 +121,19 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
             KilojouleTrackerRepository.initialise(context)
             try
             {
-                Log.d("Request Return", KilojouleTrackerRepository.get().fetchFood("dookie"))
+                Log.d("Request Return", KilojouleTrackerRepository.get().getMealFromAPI("2 cups of cooked rice").mealName)
+                Log.d("Request Return", KilojouleTrackerRepository.get().getMealFromAPI("2 cups of cooked rice").numKilojoules.toString())
             }
             catch(e: HttpException)
             {
                 Log.d("HTTP Exception", e.toString())
             }
-
         }
     }
 
     Box(modifier = modifier)
     {
-        Column(modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(20.dp))
+        Column(modifier = Modifier.align(Alignment.TopCenter).padding(20.dp))
         {
             TextField(value = mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
@@ -152,7 +150,7 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                 text -> servingSizeText = text
                 logMealViewModel.servingSizeText = servingSizeText
             })
-            TextField(value = numCaloriesText, label = {Text("Enter the number of Calories")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
+            TextField(value = numCaloriesText, label = {Text("Enter the number of Kilojoules")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
                 text -> numCaloriesText = text
                 logMealViewModel.numCaloriesText = servingSizeText

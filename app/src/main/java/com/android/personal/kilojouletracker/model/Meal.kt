@@ -2,28 +2,27 @@ package com.android.personal.kilojouletracker.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.squareup.moshi.Json
 
 @Entity
 class Meal
 {
     @PrimaryKey var mealId: Int = totalMealsCreated
-    lateinit var mealName: String
-    lateinit var mealType: String
-    var servingSize = 0.0
+    var mealName: String
+    var servingWeight = 0.0
     var numKilojoules = 0.0
-    var fatContent = 0.0
-    var carbohydrateContent = 0.0
-    var proteinContent = 0.0
+    var fatWeight = 0.0
+    var carbohydrateWeight = 0.0
+    var proteinWeight = 0.0
 
-    constructor(mealName: String, mealType: String, servingSize: Double, numKilojoules: Double, fatContent: Double, carbohydrateContent: Double, proteinContent: Double)
+    constructor(mealName: String, servingWeight: Double, numKilojoules: Double, fatWeight: Double, carbohydrateWeight: Double, proteinWeight: Double)
     {
         this.mealName = mealName
-        this.mealType = mealType
-        this.servingSize = servingSize
+        this.servingWeight = servingWeight
         this.numKilojoules = numKilojoules
-        this.fatContent = fatContent
-        this.carbohydrateContent = carbohydrateContent
-        this.proteinContent = proteinContent
+        this.fatWeight = fatWeight
+        this.carbohydrateWeight = carbohydrateWeight
+        this.proteinWeight = proteinWeight
 
         ++totalMealsCreated
     }
