@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,12 +23,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.android.personal.kilojouletracker.R
-import com.android.personal.kilojouletracker.api.FatSecretApi
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.scalars.ScalarsConverterFactory
-import retrofit2.create
+import retrofit2.HttpException
 
 const val HOME_SCREEN_ROUTE = "HomeScreen"
 const val LOG_MEAL_SCREEN_ROUTE = "LogMealScreen"
@@ -78,17 +75,23 @@ fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Mod
     {
         Column(modifier = Modifier.align(Alignment.Center))
         {
-            Button(onClick = {navigationController.navigate(LOG_MEAL_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 20.dp))
+            Button(onClick = {navigationController.navigate(LOG_MEAL_SCREEN_ROUTE)}, modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(0.dp, 0.dp, 0.dp, 20.dp))
             {
                 Icon(painterResource(id = R.drawable.baseline_lunch_dining_24), contentDescription = "Log Meal Icon", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
                 Text("Log Meal")
             }
-            Button(onClick = {navigationController.navigate(VIEW_LOGGED_MEALS_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 20.dp))
+            Button(onClick = {navigationController.navigate(VIEW_LOGGED_MEALS_SCREEN_ROUTE)}, modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(0.dp, 0.dp, 0.dp, 20.dp))
             {
                 Icon(painterResource(id = R.drawable.baseline_list_24), contentDescription = "View Logged Meal Icon", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
                 Text("View Logged Meals")
             }
-            Button(onClick = {navigationController.navigate(DAILY_PROGRESS_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 0.dp, 0.dp, 20.dp))
+            Button(onClick = {navigationController.navigate(DAILY_PROGRESS_SCREEN_ROUTE)}, modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(0.dp, 0.dp, 0.dp, 20.dp))
             {
                 Icon(painterResource(id = R.drawable.baseline_stars_24), contentDescription = "Daily Progress Icon", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
                 Text("View Daily Progress")
@@ -111,13 +114,28 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
     var servingSizeText: String by remember { mutableStateOf("0.0") }
     var numCaloriesText: String by remember { mutableStateOf("0.0") }
 
-    LocalLifecycleOwner.current.lifecycleScope.launch()
+    LaunchedEffect(LocalLifecycleOwner.current.lifecycleScope)
     {
+        launch()
+        {
+            KilojouleTrackerRepository.initialise(context)
+            try
+            {
+                Log.d("Request Return", KilojouleTrackerRepository.get().fetchFood("dookie"))
+            }
+            catch(e: HttpException)
+            {
+                Log.d("HTTP Exception", e.toString())
+            }
+
+        }
     }
 
     Box(modifier = modifier)
     {
-        Column(modifier = Modifier.align(Alignment.TopCenter).padding(20.dp))
+        Column(modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(20.dp))
         {
             TextField(value = mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
