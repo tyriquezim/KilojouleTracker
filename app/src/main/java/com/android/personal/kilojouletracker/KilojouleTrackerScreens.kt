@@ -1,5 +1,6 @@
 package com.android.personal.kilojouletracker
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,13 +16,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.android.personal.kilojouletracker.R
 import com.android.personal.kilojouletracker.api.FatSecretApi
+import kotlinx.coroutines.launch
 import retrofit2.Retrofit
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.create
 
 const val HOME_SCREEN_ROUTE = "HomeScreen"
@@ -106,8 +111,9 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
     var servingSizeText: String by remember { mutableStateOf("0.0") }
     var numCaloriesText: String by remember { mutableStateOf("0.0") }
 
-    val retrofit: Retrofit = Retrofit.Builder().baseUrl("https://platform.fatsecret.com/rest/").build()
-    val fatSecretApi = retrofit.create<FatSecretApi>()
+    LocalLifecycleOwner.current.lifecycleScope.launch()
+    {
+    }
 
     Box(modifier = modifier)
     {
