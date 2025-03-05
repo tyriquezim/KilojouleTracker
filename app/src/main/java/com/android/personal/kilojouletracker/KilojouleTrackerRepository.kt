@@ -27,7 +27,8 @@ class KilojouleTrackerRepository private  constructor(context: Context)
 {
     private val database: KilojouleTrackerDatabase = Room.databaseBuilder(context.applicationContext, KilojouleTrackerDatabase::class.java, DATABASE_NAME).build()
     private val nutritionixApi: NutritionixApi
-    val mutex: Mutex = Mutex()
+    val databaseMutex: Mutex = Mutex()
+    val apiMutex: Mutex = Mutex()
 
     init
     {
@@ -48,11 +49,12 @@ class KilojouleTrackerRepository private  constructor(context: Context)
     suspend fun getMeals() = database.mealDao().getMeals()
 
     //Network functions
-    suspend fun getMealFromAPI(queryString: String): Meal?
+    suspend fun getMealFromAPI(foodName: String, servingWeight: Double): Meal?
     {
         var meal: Meal? = null
         try
         {
+            var queryString = NutritionixApi.formatNameAndWeightForNLP(foodName, servingWeight)
             var foodRequestBody = NutritionixApi.formatQueryStringToJsonBody(queryString)
             var foodJson = nutritionixApi.getFoodData(foodRequestBody)
             Log.d("Response JSON", foodJson) //Just to see the contents

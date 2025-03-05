@@ -1,9 +1,11 @@
 package com.android.personal.kilojouletracker.database
 
+import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.android.personal.kilojouletracker.model.Meal
 
+@Dao
 interface MealDao
 {
     @Insert

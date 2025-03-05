@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,14 +16,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.android.personal.kilojouletracker.model.Meal
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 const val HOME_SCREEN_ROUTE = "HomeScreen"
 const val LOG_MEAL_SCREEN_ROUTE = "LogMealScreen"
@@ -112,49 +113,122 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
     var mealNameText: String by remember { mutableStateOf("") }
     var mealTypeText: String by remember { mutableStateOf("") }
     var servingSizeText: String by remember { mutableStateOf("") }
-    var numCaloriesText: String by remember { mutableStateOf("") }
-
-    LaunchedEffect(LocalLifecycleOwner.current.lifecycleScope)
-    {
-        launch()
-        {
-            KilojouleTrackerRepository.initialise(context)
-            try
-            {
-                Log.d("Request Return", KilojouleTrackerRepository.get().getMealFromAPI("2 cups of cooked rice").mealName)
-                Log.d("Request Return", KilojouleTrackerRepository.get().getMealFromAPI("2 cups of cooked rice").numKilojoules.toString())
-            }
-            catch(e: HttpException)
-            {
-                Log.d("HTTP Exception", e.toString())
-            }
-        }
-    }
+    var numKilojoulesText: String by remember { mutableStateOf("") }
+    var fatWeightText: String by remember { mutableStateOf("") }
+    var carbohydrateWeightText: String by remember { mutableStateOf("") }
+    var proteinWeightText: String by remember { mutableStateOf("") }
+    var manualMealLogging: Boolean by remember { mutableStateOf(false) }
 
     Box(modifier = modifier)
     {
-        Column(modifier = Modifier.align(Alignment.TopCenter).padding(20.dp))
+        Column(modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(20.dp))
         {
             TextField(value = mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
                 text: String -> mealNameText = text
                 logMealViewModel.mealNameText = text
-            })
-            TextField(value = mealTypeText, label = {Text("Enter the Meal Type")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
-            {
-                text: String -> mealTypeText = text
-                logMealViewModel.mealTypeText = mealTypeText
-            })
+            }, modifier = Modifier.align(Alignment.CenterHorizontally))
             TextField(value = servingSizeText, label = {Text("Enter the Serving Size (grams)")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
                 text -> servingSizeText = text
-                logMealViewModel.servingSizeText = servingSizeText
-            })
-            TextField(value = numCaloriesText, label = {Text("Enter the number of Kilojoules")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
+                logMealViewModel.servingWeightText = servingSizeText
+            }, modifier = Modifier.align(Alignment.CenterHorizontally))
+
+            if(!manualMealLogging) //Initially it will try automatically fill this info out with info from the API
             {
-                text -> numCaloriesText = text
-                logMealViewModel.numCaloriesText = servingSizeText
-            })
+                Text("Kilojoules: ",modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text("Fat: ", modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text("Carbohydrate: ", modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text("Protein: ", modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
+            else //If the API request failed, it will need the user to manually enter the information
+            {
+                TextField(value = numKilojoulesText, label = { Text("Enter the number of Kilojoules") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                {
+                    text ->
+                    numKilojoulesText = text
+                    logMealViewModel.numKilojoulesText = numKilojoulesText
+                }, modifier = Modifier.align(Alignment.CenterHorizontally))
+                TextField(value = fatWeightText, label = { Text("Enter the amount of Fat (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                {
+                    text -> fatWeightText = text
+                    logMealViewModel.fatWeightText = fatWeightText
+                }, modifier = Modifier.align(Alignment.CenterHorizontally))
+                TextField(value = carbohydrateWeightText, label = { Text("Enter the amount of Carbohydrates (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                {
+                    text -> carbohydrateWeightText = text
+                    logMealViewModel.carbohydrateWeightText = carbohydrateWeightText
+                }, modifier = Modifier.align(Alignment.CenterHorizontally))
+                TextField(value = proteinWeightText, label = { Text("Enter the amount of Protein (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                {
+                    text -> proteinWeightText = text
+                    logMealViewModel.proteinWeightText = servingSizeText
+                }, modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
+        }
+        Button(onClick =
+        {
+            GlobalScope.launch() //Global Scope because meal logging cannot be interrupted
+            {
+                withContext(Dispatchers.IO)
+                {
+                    var loggedMeal: Meal? = null
+
+                    if(!manualMealLogging)
+                    {
+                        try
+                        {
+                            KilojouleTrackerRepository.get().apiMutex.withLock()
+                            {
+                                loggedMeal = KilojouleTrackerRepository.get().getMealFromAPI(logMealViewModel.mealNameText, logMealViewModel.servingWeightText.toDouble())
+                            }
+
+                            if(loggedMeal == null)
+                            {
+                                manualMealLogging = true
+                                withContext(Dispatchers.Main)
+                                {
+                                    Toast.makeText(context, "Could not log meal. Enter the meal details manually.", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                            else
+                            {
+                                KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
+                                Log.d("Log Meal", "Successfully Logged Meal")
+                            }
+                        }
+                        catch(e: NumberFormatException)
+                        {
+                            withContext(Dispatchers.Main)
+                            {
+                                Toast.makeText(context, "The serving weight must be numeric!", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            KilojouleTrackerRepository.get().databaseMutex.withLock()
+                            {
+                                loggedMeal = Meal(logMealViewModel.mealNameText, logMealViewModel.servingWeightText.toDouble(), logMealViewModel.numKilojoulesText.toDouble(), logMealViewModel.fatWeightText.toDouble(), logMealViewModel.carbohydrateWeightText.toDouble(), logMealViewModel.proteinWeightText.toDouble())
+                                KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
+                                manualMealLogging = false
+                            }
+                        }
+                        catch(e: NumberFormatException)
+                        {
+                            Toast.makeText(context, "All values, excluding Meal Name, must be numeric!", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+        }, modifier = Modifier.align(Alignment.BottomCenter))
+        {
+            Icon(painterResource(id = R.drawable.baseline_add_24), contentDescription = "Log Meal", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
+            Text("Log Meal")
         }
         Button(onClick = {navigationController.navigate(HOME_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.BottomEnd))
         {
