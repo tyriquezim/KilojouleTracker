@@ -16,6 +16,7 @@ import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import retrofit2.HttpException
 
 class KilojouleTrackerRepository private  constructor(context: Context)
 {
@@ -29,21 +30,32 @@ class KilojouleTrackerRepository private  constructor(context: Context)
     }
 
     //Network functions
-    suspend fun getMealFromAPI(queryString: String): Meal
+    suspend fun getMealFromAPI(queryString: String): Meal?
     {
-        var foodJson = nutritionixApi.getFoodData("{\"query\":\"$queryString\"}".toRequestBody())
-        Log.d("Response JSON", foodJson)
-        val json = Json {ignoreUnknownKeys = false}
-        var outerJsonObject = json.parseToJsonElement(foodJson).jsonObject
-        var jsonArray = checkNotNull(outerJsonObject["foods"]?.jsonArray)
-        val mealName = checkNotNull(jsonArray[0].jsonObject["food_name"]?.jsonPrimitive?.content) {"Failed to extract food_name from Json response"}
-        val servingWeight = checkNotNull(jsonArray[0].jsonObject["serving_weight_grams"]?.jsonPrimitive?.double) {"Failed to extract serving_weight_grams from Json response"}
-        val numKilojoule = caloriesToKilojoules(checkNotNull(jsonArray[0].jsonObject["nf_calories"]?.jsonPrimitive?.double) {"Failed to extract nf_calories from Json response"})
-        val fatWeight = checkNotNull(jsonArray[0].jsonObject["nf_total_fat"]?.jsonPrimitive?.double) {"Failed to extract nf_total_fat from Json response"}
-        val carbohydrateWeight = checkNotNull(jsonArray[0].jsonObject["nf_total_carbohydrate"]?.jsonPrimitive?.double) {"Failed to extract nf_total_carbohydrate from Json response"}
-        val proteinWeight = checkNotNull(jsonArray[0].jsonObject["nf_protein"]?.jsonPrimitive?.double) {"Failed to extract nf_protein from Json response"}
+        var meal: Meal? = null
+        try
+        {
+            var foodRequestBody = NutritionixApi.formatQueryStringToJsonBody(queryString)
+            var foodJson = nutritionixApi.getFoodData(foodRequestBody)
+            Log.d("Response JSON", foodJson) //Just to see the contents
+            val json = Json { ignoreUnknownKeys = false }
+            var outerJsonObject = json.parseToJsonElement(foodJson).jsonObject
+            var jsonArray = checkNotNull(outerJsonObject["foods"]?.jsonArray)
+            val mealName = checkNotNull(jsonArray[0].jsonObject["food_name"]?.jsonPrimitive?.content) { "Failed to extract food_name from Json response" }
+            val servingWeight = checkNotNull(jsonArray[0].jsonObject["serving_weight_grams"]?.jsonPrimitive?.double) { "Failed to extract serving_weight_grams from Json response" }
+            val numKilojoule = caloriesToKilojoules(checkNotNull(jsonArray[0].jsonObject["nf_calories"]?.jsonPrimitive?.double) { "Failed to extract nf_calories from Json response" })
+            val fatWeight = checkNotNull(jsonArray[0].jsonObject["nf_total_fat"]?.jsonPrimitive?.double) { "Failed to extract nf_total_fat from Json response" }
+            val carbohydrateWeight = checkNotNull(jsonArray[0].jsonObject["nf_total_carbohydrate"]?.jsonPrimitive?.double) { "Failed to extract nf_total_carbohydrate from Json response" }
+            val proteinWeight = checkNotNull(jsonArray[0].jsonObject["nf_protein"]?.jsonPrimitive?.double) { "Failed to extract nf_protein from Json response" }
 
-        return Meal(mealName, servingWeight, numKilojoule, fatWeight, carbohydrateWeight, proteinWeight)
+            meal = Meal(mealName, servingWeight, numKilojoule, fatWeight, carbohydrateWeight, proteinWeight)
+        }
+        catch(e: HttpException)
+        {
+            Log.d("HTTP Exception", e.toString())
+        }
+
+        return meal
     }
 
     private object AuthorisationInterceptor: Interceptor
