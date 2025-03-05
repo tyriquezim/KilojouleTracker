@@ -2,8 +2,11 @@ package com.android.personal.kilojouletracker
 
 import android.content.Context
 import android.util.Log
+import androidx.room.Room
 import com.android.personal.kilojouletracker.api.NutritionixApi
+import com.android.personal.kilojouletracker.database.KilojouleTrackerDatabase
 import com.android.personal.kilojouletracker.model.Meal
+import kotlinx.coroutines.sync.Mutex
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -18,9 +21,13 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import retrofit2.HttpException
 
+private const val DATABASE_NAME = "kilojoule-tracker-database"
+
 class KilojouleTrackerRepository private  constructor(context: Context)
 {
+    private val database: KilojouleTrackerDatabase = Room.databaseBuilder(context.applicationContext, KilojouleTrackerDatabase::class.java, DATABASE_NAME).build()
     private val nutritionixApi: NutritionixApi
+    val mutex: Mutex = Mutex()
 
     init
     {
@@ -28,6 +35,17 @@ class KilojouleTrackerRepository private  constructor(context: Context)
         val retrofit: Retrofit = Retrofit.Builder().client(okHttpClient).baseUrl(BASE_URL).addConverterFactory(ScalarsConverterFactory.create()).build()
         nutritionixApi = retrofit.create<NutritionixApi>()
     }
+
+    //Database Functions
+    suspend fun insertMeal(meal: Meal) = database.mealDao().insertMeal(meal)
+
+    suspend fun deleteMeal(targetMealId: Int) = database.mealDao().deleteMeal(targetMealId)
+
+    suspend fun updateMeal(targetMealId: Int, newMeal: Meal) = database.mealDao().updateMeal(targetMealId, newMeal.mealName, newMeal.servingWeight, newMeal.numKilojoules, newMeal.fatWeight, newMeal.carbohydrateWeight, newMeal.proteinWeight)
+
+    suspend fun getMeal(targetMealId: Int) = database.mealDao().getMeal(targetMealId)
+
+    suspend fun getMeals() = database.mealDao().getMeals()
 
     //Network functions
     suspend fun getMealFromAPI(queryString: String): Meal?
