@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -64,6 +65,7 @@ fun NavigationScreen()
         }
         composable(DAILY_PROGRESS_SCREEN_ROUTE)
         {
+            DailyProgressScreen(navigationController = navigationController, settingsViewModel = SettingsViewModel())
         }
         composable(SETTINGS_SCREEN_ROUTE)
         {
@@ -288,11 +290,44 @@ fun ViewLoggedMealsScreen(navigationController: NavHostController, modifier: Mod
 }
 
 @Composable
-fun DailyProgressScreen(navigationController: NavHostController, modifier: Modifier = Modifier)
+fun DailyProgressScreen(navigationController: NavHostController, settingsViewModel: SettingsViewModel, modifier: Modifier = Modifier)
 {
+    var kilojouleProgressPercentage = 0.4f
+    var fatProgressPercentage = 0.8f
+    var carbohydrateProgressPercentage = 0.7f
+    var proteinProgressPercentage = 0.3f
+
     Box(modifier = modifier)
     {
-
+        Text(text = "Progress", fontWeight = FontWeight.Bold, fontSize = 40.sp, modifier = Modifier.align(Alignment.TopCenter))
+        Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxSize())
+        {
+            Column(modifier = Modifier.align(Alignment.CenterHorizontally))
+            {
+                Text(text = "Energy Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
+                LinearProgressIndicator(progress = { kilojouleProgressPercentage }, color = Color.Red,  modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+            }
+            Column(modifier = Modifier.align(Alignment.CenterHorizontally))
+            {
+                Text(text = "Fat Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
+                LinearProgressIndicator(progress = { fatProgressPercentage }, color = Color.Yellow, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+            }
+            Column(modifier = Modifier.align(Alignment.CenterHorizontally))
+            {
+                Text(text = "Carbohydrate Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
+                LinearProgressIndicator(progress = { carbohydrateProgressPercentage }, color = Color.Green, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+            }
+            Column(modifier = Modifier.align(Alignment.CenterHorizontally))
+            {
+                Text(text = "Protein Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
+                LinearProgressIndicator(progress = { proteinProgressPercentage }, color = Color.Cyan, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+            }
+        }
+        Button(onClick = {navigationController.navigate(HOME_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.BottomEnd))
+        {
+            Icon(painterResource(id = R.drawable.baseline_arrow_back_24), contentDescription = "Back Arrow", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
+            Text("Back")
+        }
     }
 }
 
@@ -307,8 +342,12 @@ fun SettingsScreen(navigationController: NavHostController, settingsMealViewMode
 
     Box(modifier = modifier)
     {
-        Text("Set Your Goals", fontWeight = FontWeight.Bold, fontSize = 40.sp, modifier = Modifier.align(Alignment.TopCenter).padding(0.dp, 20.dp, 0.dp, 0.dp))
-        Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.align(Alignment.Center).fillMaxSize())
+        Text("Set Your Goals", fontWeight = FontWeight.Bold, fontSize = 40.sp, modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(0.dp, 20.dp, 0.dp, 0.dp))
+        Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
+            .align(Alignment.Center)
+            .fillMaxSize())
         {
             TextField(value = settingsMealViewModel.kilojouleGoalText, label = {Text("Enter your Daily Kilojoule Goal (kJ)")}, shape = RoundedCornerShape(100), onValueChange =
             {
@@ -366,6 +405,11 @@ fun SettingsScreen(navigationController: NavHostController, settingsMealViewMode
                     Toast.makeText(context, "The Protein goal must be numeric!", Toast.LENGTH_LONG).show()
                 }
             }, modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+        Button(onClick = {navigationController.navigate(HOME_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.BottomEnd))
+        {
+            Icon(painterResource(id = R.drawable.baseline_arrow_back_24), contentDescription = "Back Arrow", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
+            Text("Back")
         }
     }
 }
