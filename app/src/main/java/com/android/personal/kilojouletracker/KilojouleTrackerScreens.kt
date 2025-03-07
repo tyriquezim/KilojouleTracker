@@ -49,7 +49,7 @@ fun NavigationScreen()
 {
     val navigationController: NavHostController =  rememberNavController()
 
-    NavHost(navController = navigationController, startDestination = "HomeScreen")
+    NavHost(navController = navigationController, startDestination = HOME_SCREEN_ROUTE)
     {
         composable(HOME_SCREEN_ROUTE)
         {
@@ -64,10 +64,10 @@ fun NavigationScreen()
         }
         composable(DAILY_PROGRESS_SCREEN_ROUTE)
         {
-
         }
         composable(SETTINGS_SCREEN_ROUTE)
         {
+            SettingsScreen(navigationController = navigationController, settingsMealViewModel = SettingsViewModel(), modifier = Modifier.fillMaxSize())
         }
     }
 }
@@ -114,7 +114,7 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 {
     val context = LocalContext.current
     var mealNameText: String by remember { mutableStateOf("") }
-    var servingSizeText: String by remember { mutableStateOf("") }
+    var servingWeightText: String by remember { mutableStateOf("") }
     var numKilojoulesText: String by remember { mutableStateOf("") }
     var fatWeightText: String by remember { mutableStateOf("") }
     var carbohydrateWeightText: String by remember { mutableStateOf("") }
@@ -124,18 +124,20 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 
     Box(modifier = modifier)
     {
-        Column(modifier = Modifier.align(Alignment.TopCenter).padding(20.dp))
+        Column(modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(20.dp))
         {
-            TextField(value = mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
+            TextField(value = logMealViewModel.mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
                 text: String -> mealNameText = text
-                logMealViewModel.mealNameText = text
+                logMealViewModel.mealNameText = mealNameText
                 manualMealLogging = false //So that it reverts back if the user decides to log a different meal after a failed request
             }, modifier = Modifier.align(Alignment.CenterHorizontally))
-            TextField(value = servingSizeText, label = {Text("Enter the Serving Size (grams)")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
+            TextField(value = logMealViewModel.servingWeightText, label = {Text("Enter the Serving Size (grams)")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
-                text -> servingSizeText = text
-                logMealViewModel.servingWeightText = servingSizeText
+                text -> servingWeightText = text
+                logMealViewModel.servingWeightText = servingWeightText
             }, modifier = Modifier.align(Alignment.CenterHorizontally))
 
             if(!manualMealLogging) //Initially it will try automatically fill this info out with info from the API
@@ -166,26 +168,25 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
             }
             else //If the API request failed, it will need the user to manually enter the information
             {
-                TextField(value = numKilojoulesText, label = { Text("Enter the number of Kilojoules") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                TextField(value = logMealViewModel.numKilojoulesText, label = { Text("Enter the number of Kilojoules") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
                 {
-                    text ->
-                    numKilojoulesText = text
+                    text -> numKilojoulesText = text
                     logMealViewModel.numKilojoulesText = numKilojoulesText
                 }, modifier = Modifier.align(Alignment.CenterHorizontally))
-                TextField(value = fatWeightText, label = { Text("Enter the amount of Fat (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                TextField(value = logMealViewModel.fatWeightText, label = { Text("Enter the amount of Fat (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
                 {
                     text -> fatWeightText = text
                     logMealViewModel.fatWeightText = fatWeightText
                 }, modifier = Modifier.align(Alignment.CenterHorizontally))
-                TextField(value = carbohydrateWeightText, label = { Text("Enter the amount of Carbohydrates (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                TextField(value = logMealViewModel.carbohydrateWeightText, label = { Text("Enter the amount of Carbohydrates (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
                 {
                     text -> carbohydrateWeightText = text
                     logMealViewModel.carbohydrateWeightText = carbohydrateWeightText
                 }, modifier = Modifier.align(Alignment.CenterHorizontally))
-                TextField(value = proteinWeightText, label = { Text("Enter the amount of Protein (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
+                TextField(value = logMealViewModel.proteinWeightText, label = { Text("Enter the amount of Protein (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
                 {
                     text -> proteinWeightText = text
-                    logMealViewModel.proteinWeightText = servingSizeText
+                    logMealViewModel.proteinWeightText = proteinWeightText
                 }, modifier = Modifier.align(Alignment.CenterHorizontally))
             }
         }
@@ -278,10 +279,93 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 }
 
 @Composable
-fun SettingsScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, modifier: Modifier = Modifier)
+fun ViewLoggedMealsScreen(navigationController: NavHostController, modifier: Modifier = Modifier)
 {
     Box(modifier = modifier)
     {
-        TextField(label = "E")
+
+    }
+}
+
+@Composable
+fun DailyProgressScreen(navigationController: NavHostController, modifier: Modifier = Modifier)
+{
+    Box(modifier = modifier)
+    {
+
+    }
+}
+
+@Composable
+fun SettingsScreen(navigationController: NavHostController, settingsMealViewModel: SettingsViewModel, modifier: Modifier = Modifier)
+{
+    val context = LocalContext.current.applicationContext
+    var kilojouleGoalText by remember { mutableStateOf("") }
+    var fatGoalText by remember {mutableStateOf("")}
+    var carbohydrateGoalText by remember {mutableStateOf("")}
+    var proteinGoalText by remember {mutableStateOf("")}
+
+    Box(modifier = modifier)
+    {
+        Text("Set Your Goals", fontWeight = FontWeight.Bold, fontSize = 40.sp, modifier = Modifier.align(Alignment.TopCenter).padding(0.dp, 20.dp, 0.dp, 0.dp))
+        Column(verticalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.align(Alignment.Center).fillMaxSize())
+        {
+            TextField(value = settingsMealViewModel.kilojouleGoalText, label = {Text("Enter your Daily Kilojoule Goal (kJ)")}, shape = RoundedCornerShape(100), onValueChange =
+            {
+                text -> kilojouleGoalText = text
+                settingsMealViewModel.kilojouleGoalText = kilojouleGoalText
+
+                try
+                {
+                    settingsMealViewModel.kilojouleGoalText.toDouble()
+                }
+                catch(e: NumberFormatException)
+                {
+                    Toast.makeText(context, "The Kilojoule goal must be numeric!", Toast.LENGTH_LONG).show()
+                }
+            }, modifier = Modifier.align(Alignment.CenterHorizontally))
+            TextField(value = settingsMealViewModel.fatGoalText, label = { Text("Enter your Fat Goal (grams)")}, shape = RoundedCornerShape(100), onValueChange =
+            {
+                text -> fatGoalText = text
+                settingsMealViewModel.fatGoalText = fatGoalText
+
+                try
+                {
+                    settingsMealViewModel.fatGoalText.toDouble()
+                }
+                catch(e: NumberFormatException)
+                {
+                    Toast.makeText(context, "The Fat goal must be numeric!", Toast.LENGTH_LONG).show()
+                }
+            }, modifier = Modifier.align(Alignment.CenterHorizontally))
+            TextField(value = settingsMealViewModel.carbohydrateGoalText, label = {Text("Enter your Daily Carbohydrate Goal (grams)")}, shape = RoundedCornerShape(100), onValueChange =
+            {
+                text -> carbohydrateGoalText = text
+                settingsMealViewModel.carbohydrateGoalText = carbohydrateGoalText
+
+                try
+                {
+                    settingsMealViewModel.carbohydrateGoalText.toDouble()
+                }
+                catch(e: NumberFormatException)
+                {
+                    Toast.makeText(context, "The Carbohydrate goal must be numeric!", Toast.LENGTH_LONG).show()
+                }
+            }, modifier = Modifier.align(Alignment.CenterHorizontally))
+            TextField(value = settingsMealViewModel.proteinGoalText, label = {Text("Enter your Daily Protein Goal (grams)")}, shape = RoundedCornerShape(100), onValueChange =
+            {
+                text -> proteinGoalText = text
+                settingsMealViewModel.proteinGoalText = proteinGoalText
+
+                try
+                {
+                    settingsMealViewModel.proteinGoalText.toDouble()
+                }
+                catch(e: NumberFormatException)
+                {
+                    Toast.makeText(context, "The Protein goal must be numeric!", Toast.LENGTH_LONG).show()
+                }
+            }, modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
     }
 }
