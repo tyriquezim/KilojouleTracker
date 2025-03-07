@@ -3,11 +3,13 @@ package com.android.personal.kilojouletracker.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.squareup.moshi.Json
+import kotlin.uuid.Uuid
 
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 @Entity
 class Meal
 {
-    @PrimaryKey var mealId: Int = totalMealsCreated
+    @PrimaryKey var mealId = Uuid.random().toString()
     var mealName: String
     var servingWeight = 0.0
     var numKilojoules = 0.0
@@ -23,12 +25,5 @@ class Meal
         this.fatWeight = fatWeight
         this.carbohydrateWeight = carbohydrateWeight
         this.proteinWeight = proteinWeight
-
-        ++totalMealsCreated
-    }
-
-    companion object
-    {
-        var totalMealsCreated: Int = 0
     }
 }

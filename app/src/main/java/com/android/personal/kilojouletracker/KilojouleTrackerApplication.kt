@@ -1,6 +1,8 @@
 package com.android.personal.kilojouletracker
 
 import android.app.Application
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class KilojouleTrackerApplication: Application()
 {
@@ -8,5 +10,10 @@ class KilojouleTrackerApplication: Application()
     {
         super.onCreate()
         KilojouleTrackerRepository.initialise(this)
+
+        GlobalScope.launch()
+        {
+            KilojouleTrackerRepository.get().deleteMeal(0)
+        }
     }
 }

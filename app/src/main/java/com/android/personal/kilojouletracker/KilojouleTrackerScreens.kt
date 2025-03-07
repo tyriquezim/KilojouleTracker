@@ -14,8 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -68,7 +72,6 @@ fun NavigationScreen()
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Modifier)
 {
@@ -111,24 +114,23 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 {
     val context = LocalContext.current
     var mealNameText: String by remember { mutableStateOf("") }
-    var mealTypeText: String by remember { mutableStateOf("") }
     var servingSizeText: String by remember { mutableStateOf("") }
     var numKilojoulesText: String by remember { mutableStateOf("") }
     var fatWeightText: String by remember { mutableStateOf("") }
     var carbohydrateWeightText: String by remember { mutableStateOf("") }
     var proteinWeightText: String by remember { mutableStateOf("") }
     var manualMealLogging: Boolean by remember { mutableStateOf(false) }
+    var firstMealHasBeenLogged: Boolean by remember { mutableStateOf(false) }
 
     Box(modifier = modifier)
     {
-        Column(modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(20.dp))
+        Column(modifier = Modifier.align(Alignment.TopCenter).padding(20.dp))
         {
             TextField(value = mealNameText, label = {Text("Enter the Meal Name")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
                 text: String -> mealNameText = text
                 logMealViewModel.mealNameText = text
+                manualMealLogging = false //So that it reverts back if the user decides to log a different meal after a failed request
             }, modifier = Modifier.align(Alignment.CenterHorizontally))
             TextField(value = servingSizeText, label = {Text("Enter the Serving Size (grams)")}, shape = RoundedCornerShape(100), leadingIcon = {Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon")}, onValueChange =
             {
@@ -138,10 +140,29 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 
             if(!manualMealLogging) //Initially it will try automatically fill this info out with info from the API
             {
-                Text("Kilojoules: ",modifier = Modifier.align(Alignment.CenterHorizontally))
-                Text("Fat: ", modifier = Modifier.align(Alignment.CenterHorizontally))
-                Text("Carbohydrate: ", modifier = Modifier.align(Alignment.CenterHorizontally))
-                Text("Protein: ", modifier = Modifier.align(Alignment.CenterHorizontally))
+                if(firstMealHasBeenLogged)
+                {
+                    Row(modifier = Modifier.padding(0.dp, 40.dp, 0.dp, 0.dp))
+                    {
+                        Text("Kilojoules: ", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(numKilojoulesText + "kJ", fontSize = 20.sp)
+                    }
+                    Row()
+                    {
+                        Text("Fat: ", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(fatWeightText + "g", fontSize = 20.sp)
+                    }
+                    Row()
+                    {
+                        Text("Carbohydrate: ", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(carbohydrateWeightText + "g", fontSize = 20.sp)
+                    }
+                    Row()
+                    {
+                        Text("Protein: ", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(proteinWeightText + "g", fontSize = 20.sp)
+                    }
+                }
             }
             else //If the API request failed, it will need the user to manually enter the information
             {
@@ -188,6 +209,11 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                             if(loggedMeal == null)
                             {
                                 manualMealLogging = true
+                                numKilojoulesText = ""
+                                fatWeightText = ""
+                                carbohydrateWeightText = ""
+                                proteinWeightText = ""
+
                                 withContext(Dispatchers.Main)
                                 {
                                     Toast.makeText(context, "Could not log meal. Enter the meal details manually.", Toast.LENGTH_LONG).show()
@@ -196,6 +222,16 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                             else
                             {
                                 KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
+                                numKilojoulesText = loggedMeal!!.numKilojoules.toString()
+                                fatWeightText = loggedMeal!!.fatWeight.toString()
+                                carbohydrateWeightText = loggedMeal!!.carbohydrateWeight.toString()
+                                proteinWeightText = loggedMeal!!.proteinWeight.toString()
+                                firstMealHasBeenLogged = true
+
+                                withContext(Dispatchers.Main)
+                                {
+                                    Toast.makeText(context, "Logged!", Toast.LENGTH_LONG).show()
+                                }
                                 Log.d("Log Meal", "Successfully Logged Meal")
                             }
                         }
@@ -220,7 +256,10 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                         }
                         catch(e: NumberFormatException)
                         {
-                            Toast.makeText(context, "All values, excluding Meal Name, must be numeric!", Toast.LENGTH_LONG).show()
+                            withContext(Dispatchers.Main)
+                            {
+                                Toast.makeText(context, "All values, excluding Meal Name, must be numeric!", Toast.LENGTH_LONG).show()
+                            }
                         }
                     }
                 }
@@ -239,7 +278,10 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 }
 
 @Composable
-fun SettingsScreen()
+fun SettingsScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, modifier: Modifier = Modifier)
 {
-
+    Box(modifier = modifier)
+    {
+        TextField(label = "E")
+    }
 }
