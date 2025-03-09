@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,6 +23,9 @@ import com.android.personal.kilojouletracker.ui.theme.CalorieTrackerTheme
 
 class MainActivity : ComponentActivity()
 {
+    val logMealViewModel: LogMealViewModel by viewModels()
+    val settingsViewModel: SettingsViewModel by viewModels()
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -33,7 +37,7 @@ class MainActivity : ComponentActivity()
             {
                 Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White) )}, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary))}, content = { paddingValues -> Box(modifier = Modifier.padding(paddingValues))
                 {
-                    NavigationScreen()
+                    NavigationScreen(logMealViewModel, settingsViewModel)
                 }})
             }
         }
