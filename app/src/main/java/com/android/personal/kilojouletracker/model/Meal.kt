@@ -26,4 +26,6 @@ class Meal
         this.carbohydrateWeight = carbohydrateWeight
         this.proteinWeight = proteinWeight
     }
+
+
 }

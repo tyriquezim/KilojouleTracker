@@ -3,6 +3,7 @@ package com.android.personal.kilojouletracker
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -285,7 +286,15 @@ fun ViewLoggedMealsScreen(navigationController: NavHostController, modifier: Mod
 {
     Box(modifier = modifier)
     {
+        LazyColumn()
+        {
 
+        }
+        Button(onClick = {navigationController.navigate(HOME_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.BottomEnd))
+        {
+            Icon(painterResource(id = R.drawable.baseline_arrow_back_24), contentDescription = "Back Arrow", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
+            Text("Back")
+        }
     }
 }
 
@@ -305,22 +314,30 @@ fun DailyProgressScreen(navigationController: NavHostController, settingsViewMod
             Column(modifier = Modifier.align(Alignment.CenterHorizontally))
             {
                 Text(text = "Energy Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
-                LinearProgressIndicator(progress = { kilojouleProgressPercentage }, color = Color.Red,  modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+                LinearProgressIndicator(progress = { kilojouleProgressPercentage }, color = Color.Red,  modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth(0.8f))
             }
             Column(modifier = Modifier.align(Alignment.CenterHorizontally))
             {
                 Text(text = "Fat Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
-                LinearProgressIndicator(progress = { fatProgressPercentage }, color = Color.Yellow, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+                LinearProgressIndicator(progress = { fatProgressPercentage }, color = Color.Yellow, modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth(0.8f))
             }
             Column(modifier = Modifier.align(Alignment.CenterHorizontally))
             {
                 Text(text = "Carbohydrate Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
-                LinearProgressIndicator(progress = { carbohydrateProgressPercentage }, color = Color.Green, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+                LinearProgressIndicator(progress = { carbohydrateProgressPercentage }, color = Color.Green, modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth(0.8f))
             }
             Column(modifier = Modifier.align(Alignment.CenterHorizontally))
             {
                 Text(text = "Protein Consumption Progress", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
-                LinearProgressIndicator(progress = { proteinProgressPercentage }, color = Color.Cyan, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.8f))
+                LinearProgressIndicator(progress = { proteinProgressPercentage }, color = Color.Cyan, modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth(0.8f))
             }
         }
         Button(onClick = {navigationController.navigate(HOME_SCREEN_ROUTE)}, modifier = Modifier.align(Alignment.BottomEnd))

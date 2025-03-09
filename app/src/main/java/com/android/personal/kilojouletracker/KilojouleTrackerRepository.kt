@@ -48,6 +48,14 @@ class KilojouleTrackerRepository private  constructor(context: Context)
 
     suspend fun getMeals() = database.mealDao().getMeals()
 
+    suspend fun getTotalKilojoules() = database.mealDao().getTotalKilojoules()
+
+    suspend fun getTotalFatWeight() = database.mealDao().getTotalFatWeight()
+
+    suspend fun getTotalCarbohydrateWeight() = database.mealDao().getTotalCarbohydrateWeight()
+
+    suspend fun getTotalProteinWeight() = database.mealDao().getTotalProteinWeight()
+
     //Network functions
     suspend fun getMealFromAPI(foodName: String, servingWeight: Double): Meal?
     {

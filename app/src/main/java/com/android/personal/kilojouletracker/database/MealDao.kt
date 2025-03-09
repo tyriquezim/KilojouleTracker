@@ -22,4 +22,16 @@ interface MealDao
 
     @Query("SELECT * FROM Meal")
     suspend fun getMeals(): List<Meal>
+
+    @Query("SELECT SUM(numKilojoules) AS totalKilojoules FROM Meal")
+    suspend fun getTotalKilojoules(): Double
+
+    @Query("SELECT SUM(fatWeight) AS totalFatWeight FROM Meal")
+    suspend fun getTotalFatWeight(): Double
+
+    @Query("SELECT SUM(carbohydrateWeight) AS totalCarbohydrateWeight FROM Meal")
+    suspend fun getTotalCarbohydrateWeight(): Double
+
+    @Query("SELECT SUM(proteinWeight) AS totalProteinWeight FROM Meal")
+    suspend fun getTotalProteinWeight(): Double
 }
