@@ -5,9 +5,11 @@ import android.app.LocalActivityManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -64,7 +67,7 @@ fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: Sett
         }
         composable(LOG_MEAL_SCREEN_ROUTE)
         {
-            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, Modifier.fillMaxSize())
+            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, modifier = Modifier.fillMaxSize())
         }
         composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
         {
@@ -81,7 +84,7 @@ fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: Sett
 }
 
 @Composable
-fun NavigationScreenForCameraResult(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel)
+fun NavigationScreenForCameraResult(capturedBitmap: Bitmap, logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel)
 {
     val navigationController: NavHostController = rememberNavController()
 
@@ -93,7 +96,7 @@ fun NavigationScreenForCameraResult(logMealViewModel: LogMealViewModel, settings
         }
         composable(LOG_MEAL_SCREEN_ROUTE)
         {
-            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, Modifier.fillMaxSize())
+            LogMealScreen(navigationController = navigationController, capturedBitmap, logMealViewModel = logMealViewModel, Modifier.fillMaxSize())
         }
         composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
         {
@@ -141,7 +144,7 @@ fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Mod
 }
 
 @Composable
-fun LogMealScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, modifier: Modifier = Modifier)
+fun LogMealScreen(navigationController: NavHostController, capturedBitmap: Bitmap? = null, logMealViewModel: LogMealViewModel, modifier: Modifier = Modifier)
 {
     val context = LocalContext.current
     var manualMealLogging: Boolean by remember { mutableStateOf(false) }
@@ -210,6 +213,10 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                     text -> logMealViewModel.proteinWeightText = text
                 }, modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+            }
+            if(capturedBitmap != null)
+            {
+                Image(bitmap = capturedBitmap.asImageBitmap(), contentDescription = "Captured Photo")
             }
             Button(onClick =
             {
