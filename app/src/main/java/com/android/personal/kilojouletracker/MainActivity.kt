@@ -1,5 +1,9 @@
 package com.android.personal.kilojouletracker
 
+import android.app.Activity
+import android.app.ComponentCaller
+import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,6 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.android.personal.kilojouletracker.ui.theme.CalorieTrackerTheme
 
 class MainActivity : ComponentActivity()
@@ -35,11 +41,42 @@ class MainActivity : ComponentActivity()
         {
             CalorieTrackerTheme()
             {
-                Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White) )}, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary))}, content = { paddingValues -> Box(modifier = Modifier.padding(paddingValues))
-                {
-                    NavigationScreen(logMealViewModel, settingsViewModel)
-                }})
+                Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)) }, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary)) }, content = { paddingValues ->
+                    Box(modifier = Modifier.padding(paddingValues))
+                    {
+                        NavigationScreen(logMealViewModel, settingsViewModel)
+                    }
+                })
             }
         }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?, caller: ComponentCaller)
+    {
+        super.onActivityResult(requestCode, resultCode, data, caller)
+
+        if(requestCode == CAMERA_REQUEST_CODE && resultCode == Activity.RESULT_OK)
+        {
+            val capturedImage = data?.extras?.getParcelable("data", Bitmap::class.java) as Bitmap
+
+            setContent()
+            {
+                CalorieTrackerTheme()
+                {
+                    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)) }, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary)) }, content = { paddingValues ->
+                        Box(modifier = Modifier.padding(paddingValues))
+                        {
+                            NavigationScreenForCameraResult(logMealViewModel = logMealViewModel, settingsViewModel = settingsViewModel)
+                        }
+                    })
+                }
+            }
+        }
+    }
+
+    companion object
+    {
+        const val CAMERA_REQUEST_CODE = 1
     }
 }

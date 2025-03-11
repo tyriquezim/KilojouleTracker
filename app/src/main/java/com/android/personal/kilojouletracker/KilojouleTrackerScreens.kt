@@ -81,6 +81,35 @@ fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: Sett
 }
 
 @Composable
+fun NavigationScreenForCameraResult(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel)
+{
+    val navigationController: NavHostController = rememberNavController()
+
+    NavHost(navController = navigationController, startDestination = LOG_MEAL_SCREEN_ROUTE)
+    {
+        composable(HOME_SCREEN_ROUTE)
+        {
+            HomeScreen(navigationController = navigationController, Modifier.fillMaxSize())
+        }
+        composable(LOG_MEAL_SCREEN_ROUTE)
+        {
+            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, Modifier.fillMaxSize())
+        }
+        composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
+        {
+        }
+        composable(DAILY_PROGRESS_SCREEN_ROUTE)
+        {
+            DailyProgressScreen(navigationController = navigationController, settingsViewModel = settingsViewModel)
+        }
+        composable(SETTINGS_SCREEN_ROUTE)
+        {
+            SettingsScreen(navigationController = navigationController, settingsMealViewModel = settingsViewModel, modifier = Modifier.fillMaxSize())
+        }
+    }
+}
+
+@Composable
 fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Modifier)
 {
     Box(modifier = modifier)
@@ -447,12 +476,11 @@ private fun launchCameraIntent(context: Context)
 
     try
     {
-        startActivityForResult(originActivity, cameraIntent, 1, null)
+        startActivityForResult(originActivity, cameraIntent, MainActivity.CAMERA_REQUEST_CODE, null)
     }
     catch(e: ActivityNotFoundException)
     {
         Log.d("Failed to launch implicit image capture intent", e.toString())
         Toast.makeText(context, "Failed to Launch Image Capture!", Toast.LENGTH_LONG).show()
     }
-
 }
