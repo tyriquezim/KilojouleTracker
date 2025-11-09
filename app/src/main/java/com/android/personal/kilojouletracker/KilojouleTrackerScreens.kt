@@ -55,7 +55,7 @@ const val DAILY_PROGRESS_SCREEN_ROUTE = "DailyProgressScreen"
 const val SETTINGS_SCREEN_ROUTE = "Settings"
 
 @Composable
-fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel)
+fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel, cameraLaunchRequestFun: () -> Unit)
 {
     val navigationController: NavHostController = rememberNavController()
 
@@ -67,36 +67,7 @@ fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: Sett
         }
         composable(LOG_MEAL_SCREEN_ROUTE)
         {
-            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, modifier = Modifier.fillMaxSize())
-        }
-        composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
-        {
-        }
-        composable(DAILY_PROGRESS_SCREEN_ROUTE)
-        {
-            DailyProgressScreen(navigationController = navigationController, settingsViewModel = settingsViewModel)
-        }
-        composable(SETTINGS_SCREEN_ROUTE)
-        {
-            SettingsScreen(navigationController = navigationController, settingsMealViewModel = settingsViewModel, modifier = Modifier.fillMaxSize())
-        }
-    }
-}
-
-@Composable
-fun NavigationScreenForCameraResult(capturedBitmap: Bitmap, logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel)
-{
-    val navigationController: NavHostController = rememberNavController()
-
-    NavHost(navController = navigationController, startDestination = LOG_MEAL_SCREEN_ROUTE)
-    {
-        composable(HOME_SCREEN_ROUTE)
-        {
-            HomeScreen(navigationController = navigationController, Modifier.fillMaxSize())
-        }
-        composable(LOG_MEAL_SCREEN_ROUTE)
-        {
-            LogMealScreen(navigationController = navigationController, capturedBitmap, logMealViewModel = logMealViewModel, Modifier.fillMaxSize())
+            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, cameraLaunchRequestFun, modifier = Modifier.fillMaxSize())
         }
         composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
         {
@@ -144,7 +115,7 @@ fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Mod
 }
 
 @Composable
-fun LogMealScreen(navigationController: NavHostController, capturedBitmap: Bitmap? = null, logMealViewModel: LogMealViewModel, modifier: Modifier = Modifier)
+fun LogMealScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, cameraLaunchRequestFun: () -> kotlin.Unit, modifier: Modifier = Modifier)
 {
     val context = LocalContext.current
     var manualMealLogging: Boolean by remember { mutableStateOf(false) }
@@ -158,8 +129,7 @@ fun LogMealScreen(navigationController: NavHostController, capturedBitmap: Bitma
             {
                 text: String -> logMealViewModel.mealNameText = text
                 manualMealLogging = false //So that it reverts back if the user decides to log a different meal after a failed request
-            }, modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            }, modifier = Modifier.align(Alignment.CenterHorizontally))
             TextField(value = logMealViewModel.servingWeightText, label = { Text("Enter the Serving Size (grams)") }, shape = RoundedCornerShape(100), leadingIcon = { Icon(painter = painterResource(id = R.drawable.baseline_fastfood_24), contentDescription = "Food Icon") }, onValueChange =
             {
                 text -> logMealViewModel.servingWeightText = text
@@ -214,12 +184,9 @@ fun LogMealScreen(navigationController: NavHostController, capturedBitmap: Bitma
                 }, modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
-            if(capturedBitmap != null)
-            {
-                Image(bitmap = capturedBitmap.asImageBitmap(), contentDescription = "Captured Photo")
-            }
             Button(onClick =
             {
+                cameraLaunchRequestFun()
                 launchCameraIntent(context)
             }, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 20.dp, 0.dp, 0.dp))
             {

@@ -52,7 +52,6 @@ class MainActivity : ComponentActivity()
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
-        requestCameraPermission()
         enableEdgeToEdge()
         setContent()
         {
@@ -61,42 +60,15 @@ class MainActivity : ComponentActivity()
                 Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)) }, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary)) }, content = { paddingValues ->
                     Box(modifier = Modifier.padding(paddingValues))
                     {
-                        NavigationScreen(logMealViewModel, settingsViewModel)
+                        NavigationScreen(logMealViewModel, settingsViewModel, ::requestCameraPermission)
                     }
                 })
             }
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?, caller: ComponentCaller)
-    {
-        super.onActivityResult(requestCode, resultCode, data, caller)
-
-        Log.d("onActivityResult Called", "Just before camera if statement")
-
-        if(requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK)
-        {
-            Log.d("onActivityResult Called", "In camera if statement")
-            val capturedImage = data?.extras?.getParcelable("data", Bitmap::class.java) as Bitmap
-
-            setContent()
-            {
-                CalorieTrackerTheme()
-                {
-                    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)) }, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary)) }, content = { paddingValues ->
-                        Box(modifier = Modifier.padding(paddingValues))
-                        {
-                            NavigationScreenForCameraResult(capturedImage, logMealViewModel = logMealViewModel, settingsViewModel = settingsViewModel)
-                        }
-                    })
-                }
-            }
-        }
-    }
-
     //From Kilo Loco on Youtube
-    private fun requestCameraPermission()
+    fun requestCameraPermission()
     {
         when
         {
