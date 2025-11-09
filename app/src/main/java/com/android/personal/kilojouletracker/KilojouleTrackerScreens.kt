@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,6 +43,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.android.personal.kilojouletracker.model.Meal
+import com.android.personal.kilojouletracker.model.MealPhoto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -55,7 +57,7 @@ const val DAILY_PROGRESS_SCREEN_ROUTE = "DailyProgressScreen"
 const val SETTINGS_SCREEN_ROUTE = "Settings"
 
 @Composable
-fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel, cameraLaunchRequestFun: () -> Unit)
+fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel, cameraLaunchRequestFun: () -> Boolean, cameraLauncherFun: () -> Unit)
 {
     val navigationController: NavHostController = rememberNavController()
 
@@ -67,7 +69,7 @@ fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: Sett
         }
         composable(LOG_MEAL_SCREEN_ROUTE)
         {
-            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, cameraLaunchRequestFun, modifier = Modifier.fillMaxSize())
+            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, cameraLaunchRequestFun, cameraLauncherFun, modifier = Modifier.fillMaxSize())
         }
         composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
         {
@@ -115,7 +117,7 @@ fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Mod
 }
 
 @Composable
-fun LogMealScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, cameraLaunchRequestFun: () -> kotlin.Unit, modifier: Modifier = Modifier)
+fun LogMealScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, cameraLaunchRequestFun: () -> Boolean, cameraLauncherFun: () -> Unit, modifier: Modifier = Modifier)
 {
     val context = LocalContext.current
     var manualMealLogging: Boolean by remember { mutableStateOf(false) }
@@ -186,8 +188,12 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
             }
             Button(onClick =
             {
-                cameraLaunchRequestFun()
-                launchCameraIntent(context)
+                var shouldCameraLaunch = cameraLaunchRequestFun()
+
+                if(shouldCameraLaunch)
+                {
+                    cameraLauncherFun()
+                }
             }, modifier = Modifier.align(Alignment.CenterHorizontally).padding(0.dp, 20.dp, 0.dp, 0.dp))
             {
                 Icon(painterResource(id = R.drawable.baseline_photo_camera_24), contentDescription = "Photo Launch")
@@ -200,67 +206,92 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                 withContext(Dispatchers.IO)
                 {
                     var loggedMeal: Meal? = null
+                    var loggedMealPhoto: MealPhoto? = (context as MainActivity).currentMealPhoto
 
-                    if(!manualMealLogging)
+                    if(loggedMealPhoto == null)
                     {
-                        try
+                        withContext(Dispatchers.Main)
                         {
-                            KilojouleTrackerRepository.get().apiMutex.withLock()
+                            Toast.makeText(context, "Please take a photo of your meal!", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    else
+                    {
+                        if(!manualMealLogging)
+                        {
+                            try
                             {
-                                loggedMeal = KilojouleTrackerRepository.get().getMealFromAPI(logMealViewModel.mealNameText, logMealViewModel.servingWeightText.toDouble())
-                            }
-
-                            if(loggedMeal == null)
-                            {
-                                manualMealLogging = true
-                                logMealViewModel.numKilojoulesText = ""
-                                logMealViewModel.fatWeightText = ""
-                                logMealViewModel.carbohydrateWeightText = ""
-                                logMealViewModel.proteinWeightText = ""
-
-                                withContext(Dispatchers.Main)
+                                KilojouleTrackerRepository.get().apiMutex.withLock()
                                 {
-                                    Toast.makeText(context, "Could not log meal. Enter the meal details manually.", Toast.LENGTH_LONG).show()
+                                    loggedMeal = KilojouleTrackerRepository.get().getMealFromAPI(logMealViewModel.mealNameText, logMealViewModel.servingWeightText.toDouble())
+                                }
+
+                                if(loggedMeal == null)
+                                {
+                                    manualMealLogging = true
+                                    logMealViewModel.numKilojoulesText = ""
+                                    logMealViewModel.fatWeightText = ""
+                                    logMealViewModel.carbohydrateWeightText = ""
+                                    logMealViewModel.proteinWeightText = ""
+
+                                    withContext(Dispatchers.Main)
+                                    {
+                                        Toast.makeText(context, "Could not log meal. Enter the meal details manually.", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                                else
+                                {
+                                    KilojouleTrackerRepository.get().databaseMutex.withLock()
+                                    {
+                                        loggedMealPhoto!!.mealOwnerId = loggedMeal!!.mealId
+                                        KilojouleTrackerRepository.get().insertMealPhoto(loggedMealPhoto!!)
+                                        KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
+                                        logMealViewModel.numKilojoulesText = loggedMeal!!.numKilojoules.toString()
+                                        logMealViewModel.fatWeightText = loggedMeal!!.fatWeight.toString()
+                                        logMealViewModel.carbohydrateWeightText = loggedMeal!!.carbohydrateWeight.toString()
+                                        logMealViewModel.proteinWeightText = loggedMeal!!.proteinWeight.toString()
+                                        firstMealHasBeenLogged = true
+                                    }
+
+                                    withContext(Dispatchers.Main)
+                                    {
+                                        Toast.makeText(context, "Logged!", Toast.LENGTH_LONG).show()
+                                    }
+                                    Log.d("Log Meal", "Successfully Logged Meal")
                                 }
                             }
-                            else
+                            catch(e: NumberFormatException)
                             {
-                                KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
-                                logMealViewModel.numKilojoulesText = loggedMeal!!.numKilojoules.toString()
-                                logMealViewModel.fatWeightText = loggedMeal!!.fatWeight.toString()
-                                logMealViewModel.carbohydrateWeightText = loggedMeal!!.carbohydrateWeight.toString()
-                                logMealViewModel.proteinWeightText = loggedMeal!!.proteinWeight.toString()
-                                firstMealHasBeenLogged = true
-
+                                withContext(Dispatchers.Main)
+                                {
+                                    Toast.makeText(context, "The serving weight must be numeric!", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                        else
+                        {
+                            try
+                            {
+                                KilojouleTrackerRepository.get().databaseMutex.withLock()
+                                {
+                                    loggedMeal = Meal(logMealViewModel.mealNameText, logMealViewModel.servingWeightText.toDouble(), logMealViewModel.numKilojoulesText.toDouble(), logMealViewModel.fatWeightText.toDouble(), logMealViewModel.carbohydrateWeightText.toDouble(), logMealViewModel.proteinWeightText.toDouble())
+                                    loggedMealPhoto!!.mealOwnerId = loggedMeal!!.mealId
+                                    KilojouleTrackerRepository.get().insertMealPhoto(loggedMealPhoto!!)
+                                    KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
+                                    manualMealLogging = false
+                                }
                                 withContext(Dispatchers.Main)
                                 {
                                     Toast.makeText(context, "Logged!", Toast.LENGTH_LONG).show()
                                 }
                                 Log.d("Log Meal", "Successfully Logged Meal")
                             }
-                        } catch(e: NumberFormatException)
-                        {
-                            withContext(Dispatchers.Main)
+                            catch(e: NumberFormatException)
                             {
-                                Toast.makeText(context, "The serving weight must be numeric!", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            KilojouleTrackerRepository.get().databaseMutex.withLock()
-                            {
-                                loggedMeal = Meal(logMealViewModel.mealNameText, logMealViewModel.servingWeightText.toDouble(), logMealViewModel.numKilojoulesText.toDouble(), logMealViewModel.fatWeightText.toDouble(), logMealViewModel.carbohydrateWeightText.toDouble(), logMealViewModel.proteinWeightText.toDouble())
-                                KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
-                                manualMealLogging = false
-                            }
-                        } catch(e: NumberFormatException)
-                        {
-                            withContext(Dispatchers.Main)
-                            {
-                                Toast.makeText(context, "All values, excluding Meal Name, must be numeric!", Toast.LENGTH_LONG).show()
+                                withContext(Dispatchers.Main)
+                                {
+                                    Toast.makeText(context, "All values, excluding Meal Name, must be numeric!", Toast.LENGTH_LONG).show()
+                                }
                             }
                         }
                     }
@@ -440,21 +471,5 @@ fun SettingsScreen(navigationController: NavHostController, settingsMealViewMode
             Icon(painterResource(id = R.drawable.baseline_arrow_back_24), contentDescription = "Back Arrow", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
             Text("Back")
         }
-    }
-}
-
-private fun launchCameraIntent(context: Context)
-{
-    val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-    val originActivity = context as Activity
-
-    try
-    {
-        startActivityForResult(originActivity, cameraIntent, MainActivity.CAMERA_REQUEST_CODE, null)
-    }
-    catch(e: ActivityNotFoundException)
-    {
-        Log.d("Failed to launch implicit image capture intent", e.toString())
-        Toast.makeText(context, "Failed to Launch Image Capture!", Toast.LENGTH_LONG).show()
     }
 }

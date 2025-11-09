@@ -13,7 +13,6 @@ class KilojouleTrackerApplication: Application()
 
         GlobalScope.launch()
         {
-            KilojouleTrackerRepository.get().deleteMeal(0)
         }
     }
 }

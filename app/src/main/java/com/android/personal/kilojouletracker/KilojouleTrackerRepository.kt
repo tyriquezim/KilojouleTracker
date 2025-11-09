@@ -6,6 +6,7 @@ import androidx.room.Room
 import com.android.personal.kilojouletracker.api.NutritionixApi
 import com.android.personal.kilojouletracker.database.KilojouleTrackerDatabase
 import com.android.personal.kilojouletracker.model.Meal
+import com.android.personal.kilojouletracker.model.MealPhoto
 import kotlinx.coroutines.sync.Mutex
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -40,11 +41,11 @@ class KilojouleTrackerRepository private  constructor(context: Context)
     //Database Functions
     suspend fun insertMeal(meal: Meal) = database.mealDao().insertMeal(meal)
 
-    suspend fun deleteMeal(targetMealId: Int) = database.mealDao().deleteMeal(targetMealId)
+    suspend fun deleteMeal(targetMealId: String) = database.mealDao().deleteMeal(targetMealId)
 
-    suspend fun updateMeal(targetMealId: Int, newMeal: Meal) = database.mealDao().updateMeal(targetMealId, newMeal.mealName, newMeal.servingWeight, newMeal.numKilojoules, newMeal.fatWeight, newMeal.carbohydrateWeight, newMeal.proteinWeight)
+    suspend fun updateMeal(targetMealId: String, newMeal: Meal) = database.mealDao().updateMeal(targetMealId, newMeal.mealName, newMeal.servingWeight, newMeal.numKilojoules, newMeal.fatWeight, newMeal.carbohydrateWeight, newMeal.proteinWeight)
 
-    suspend fun getMeal(targetMealId: Int) = database.mealDao().getMeal(targetMealId)
+    suspend fun getMeal(targetMealId: String) = database.mealDao().getMeal(targetMealId)
 
     suspend fun getMeals() = database.mealDao().getMeals()
 
@@ -55,6 +56,14 @@ class KilojouleTrackerRepository private  constructor(context: Context)
     suspend fun getTotalCarbohydrateWeight() = database.mealDao().getTotalCarbohydrateWeight()
 
     suspend fun getTotalProteinWeight() = database.mealDao().getTotalProteinWeight()
+
+    suspend fun insertMealPhoto(mealPhoto: MealPhoto) = database.mealDao().insertMealPhoto(mealPhoto)
+
+    suspend fun deleteMealPhoto(targetMealPhotoOwnerId: String) = database.mealDao().deleteMealPhoto(targetMealPhotoOwnerId)
+
+    suspend fun getMealPhoto(targetMealPhotoOwnerId: String) = database.mealDao().getMealPhoto(targetMealPhotoOwnerId)
+
+    suspend fun getMealPhotos() = database.mealDao().getMealPhotos()
 
     //Network functions
     suspend fun getMealFromAPI(foodName: String, servingWeight: Double): Meal?

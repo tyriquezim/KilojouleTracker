@@ -30,6 +30,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.personal.kilojouletracker.ui.theme.CalorieTrackerTheme
 import android.Manifest
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.FileProvider
+import com.android.personal.kilojouletracker.model.MealPhoto
+import java.io.File
+import java.util.Date
 
 class MainActivity : ComponentActivity()
 {
@@ -47,6 +52,12 @@ class MainActivity : ComponentActivity()
             Log.d("Permission Launcher", "Denied")
         }
     }
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture())
+    {
+        wasPhotoTaken: Boolean -> if(!wasPhotoTaken) currentMealPhoto =  null
+    }
+
+    var currentMealPhoto: MealPhoto? = null
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?)
@@ -60,7 +71,7 @@ class MainActivity : ComponentActivity()
                 Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)) }, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary)) }, content = { paddingValues ->
                     Box(modifier = Modifier.padding(paddingValues))
                     {
-                        NavigationScreen(logMealViewModel, settingsViewModel, ::requestCameraPermission)
+                        NavigationScreen(logMealViewModel, settingsViewModel, ::requestCameraPermission, ::launchCamera)
                     }
                 })
             }
@@ -68,18 +79,33 @@ class MainActivity : ComponentActivity()
     }
 
     //From Kilo Loco on Youtube
-    fun requestCameraPermission()
+    private fun requestCameraPermission(): Boolean
     {
+        var hasPermissionBeenGranted = false
         when
         {
-            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED -> {Log.d("requestCameraPermission", "Previously granted")}
-            ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)  -> {Log.d("requestCameraPermission", "Show camera permission dialog")}
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED ->
+                {
+                    Log.d("requestCameraPermission", "Previously granted")
+                    hasPermissionBeenGranted = true
+                }
+            ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)  ->
+                {
+                    Log.d("requestCameraPermission", "Show camera permission dialog")
+                    hasPermissionBeenGranted = true
+                }
             else -> requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
+        return hasPermissionBeenGranted
     }
 
-    companion object
+    private fun launchCamera()
     {
-        const val CAMERA_REQUEST_CODE = 1
+        val photoName: String = "IMG_${Date()}.jpg"
+        val photoFile = File(this.applicationContext.filesDir, photoName)
+        val photoUri = FileProvider.getUriForFile(this, "com.android.personal.kilojouletracker.fileprovider", photoFile)
+        currentMealPhoto = MealPhoto("", photoName)
+
+        cameraLauncher.launch(photoUri)
     }
 }
