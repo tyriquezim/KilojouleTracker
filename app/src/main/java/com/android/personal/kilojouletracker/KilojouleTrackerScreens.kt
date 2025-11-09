@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -57,7 +58,7 @@ const val DAILY_PROGRESS_SCREEN_ROUTE = "DailyProgressScreen"
 const val SETTINGS_SCREEN_ROUTE = "Settings"
 
 @Composable
-fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel, cameraLaunchRequestFun: () -> Boolean, cameraLauncherFun: () -> Unit)
+fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: SettingsViewModel, cameraLaunchRequestFun: () -> Boolean, cameraLauncherFun: () -> Unit, getBitmap: (fileName: String, destWidth: Int, destHeight: Int) -> Bitmap)
 {
     val navigationController: NavHostController = rememberNavController()
 
@@ -69,10 +70,16 @@ fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: Sett
         }
         composable(LOG_MEAL_SCREEN_ROUTE)
         {
-            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, cameraLaunchRequestFun, cameraLauncherFun, modifier = Modifier.fillMaxSize())
+            LogMealScreen(navigationController = navigationController, logMealViewModel = logMealViewModel, cameraLaunchRequestFun, cameraLauncherFun, getBitmap, modifier = Modifier.fillMaxSize().onGloballyPositioned()
+            {
+                    layoutCoordinates ->
+                logMealViewModel.logMealScreenWidth = layoutCoordinates.size.width
+                logMealViewModel.logMealScreenHeight = layoutCoordinates.size.height
+            })
         }
         composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
         {
+            ViewLoggedMealsScreen(navigationController = navigationController, modifier = Modifier.fillMaxSize())
         }
         composable(DAILY_PROGRESS_SCREEN_ROUTE)
         {
@@ -117,7 +124,7 @@ fun HomeScreen(navigationController: NavHostController, modifier: Modifier = Mod
 }
 
 @Composable
-fun LogMealScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, cameraLaunchRequestFun: () -> Boolean, cameraLauncherFun: () -> Unit, modifier: Modifier = Modifier)
+fun LogMealScreen(navigationController: NavHostController, logMealViewModel: LogMealViewModel, cameraLaunchRequestFun: () -> Boolean, cameraLauncherFun: () -> Unit, getBitmap: (fileName: String, destWidth: Int, destHeight: Int) -> Bitmap, modifier: Modifier = Modifier)
 {
     val context = LocalContext.current
     var manualMealLogging: Boolean by remember { mutableStateOf(false) }
@@ -186,6 +193,10 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                 }, modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
+            if(logMealViewModel.currentMealPhoto != null)
+            {
+                Image(bitmap = getBitmap(logMealViewModel.currentMealPhoto!!.photoFileName, logMealViewModel.logMealScreenWidth, logMealViewModel.logMealScreenHeight).asImageBitmap(), contentDescription = "Captured Image")
+            }
             Button(onClick =
             {
                 var shouldCameraLaunch = cameraLaunchRequestFun()
@@ -206,9 +217,8 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                 withContext(Dispatchers.IO)
                 {
                     var loggedMeal: Meal? = null
-                    var loggedMealPhoto: MealPhoto? = (context as MainActivity).currentMealPhoto
 
-                    if(loggedMealPhoto == null)
+                    if(logMealViewModel.currentMealPhoto == null)
                     {
                         withContext(Dispatchers.Main)
                         {
@@ -243,8 +253,8 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                                 {
                                     KilojouleTrackerRepository.get().databaseMutex.withLock()
                                     {
-                                        loggedMealPhoto!!.mealOwnerId = loggedMeal!!.mealId
-                                        KilojouleTrackerRepository.get().insertMealPhoto(loggedMealPhoto!!)
+                                        logMealViewModel.currentMealPhoto!!.mealOwnerId = loggedMeal!!.mealId
+                                        KilojouleTrackerRepository.get().insertMealPhoto(logMealViewModel.currentMealPhoto!!)
                                         KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
                                         logMealViewModel.numKilojoulesText = loggedMeal!!.numKilojoules.toString()
                                         logMealViewModel.fatWeightText = loggedMeal!!.fatWeight.toString()
@@ -275,8 +285,8 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                                 KilojouleTrackerRepository.get().databaseMutex.withLock()
                                 {
                                     loggedMeal = Meal(logMealViewModel.mealNameText, logMealViewModel.servingWeightText.toDouble(), logMealViewModel.numKilojoulesText.toDouble(), logMealViewModel.fatWeightText.toDouble(), logMealViewModel.carbohydrateWeightText.toDouble(), logMealViewModel.proteinWeightText.toDouble())
-                                    loggedMealPhoto!!.mealOwnerId = loggedMeal!!.mealId
-                                    KilojouleTrackerRepository.get().insertMealPhoto(loggedMealPhoto!!)
+                                    logMealViewModel.currentMealPhoto!!.mealOwnerId = loggedMeal!!.mealId
+                                    KilojouleTrackerRepository.get().insertMealPhoto(logMealViewModel.currentMealPhoto!!)
                                     KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
                                     manualMealLogging = false
                                 }

@@ -30,11 +30,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.personal.kilojouletracker.ui.theme.CalorieTrackerTheme
 import android.Manifest
+import android.graphics.BitmapFactory
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.FileProvider
 import com.android.personal.kilojouletracker.model.MealPhoto
 import java.io.File
 import java.util.Date
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity()
 {
@@ -54,10 +56,10 @@ class MainActivity : ComponentActivity()
     }
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture())
     {
-        wasPhotoTaken: Boolean -> if(!wasPhotoTaken) currentMealPhoto =  null
+        wasPhotoTaken: Boolean -> if(wasPhotoTaken) logMealViewModel.currentMealPhoto = MealPhoto("", currentMealPhotoFileName)
     }
 
-    var currentMealPhoto: MealPhoto? = null
+    var currentMealPhotoFileName: String = ""
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?)
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity()
                 Scaffold(topBar = { TopAppBar(title = { Text(stringResource(id = R.string.app_name), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)) }, colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.primary)) }, content = { paddingValues ->
                     Box(modifier = Modifier.padding(paddingValues))
                     {
-                        NavigationScreen(logMealViewModel, settingsViewModel, ::requestCameraPermission, ::launchCamera)
+                        NavigationScreen(logMealViewModel, settingsViewModel, ::requestCameraPermission, ::launchCamera, ::getScaledBitmap)
                     }
                 })
             }
@@ -101,11 +103,39 @@ class MainActivity : ComponentActivity()
 
     private fun launchCamera()
     {
-        val photoName: String = "IMG_${Date()}.jpg"
-        val photoFile = File(this.applicationContext.filesDir, photoName)
+        currentMealPhotoFileName = "IMG_${Date()}.jpg"
+        val photoFile = File(this.applicationContext.filesDir, currentMealPhotoFileName)
         val photoUri = FileProvider.getUriForFile(this, "com.android.personal.kilojouletracker.fileprovider", photoFile)
-        currentMealPhoto = MealPhoto("", photoName)
 
         cameraLauncher.launch(photoUri)
+    }
+
+    //Function from the BigNerdRanch textbook to scale down bitmap options
+    private fun getScaledBitmap(imageFileName: String, destWidth: Int, destHeight: Int): Bitmap
+    {
+        if(destWidth <= 0 || destHeight <= 0)
+        {
+            throw IllegalStateException("Cannot Scale Bitmap! Layout width and height must be greater than 0. Layout Width: " + destWidth + ", Layout Height: " + destHeight)
+        }
+        val path = this.filesDir.toString() + "/" + imageFileName
+        val options = BitmapFactory.Options()
+        options.inJustDecodeBounds = true
+        BitmapFactory.decodeFile(path, options)
+
+        val srcWidth = options.outWidth.toFloat()
+        val srcHeight = options.outHeight.toFloat()
+
+        val sampleSize = if(srcHeight <= destHeight && srcWidth <= destWidth)
+        {
+            1
+        }
+        else
+        {
+            val heightScale = srcHeight / destHeight
+            val widthScale = srcWidth / destWidth
+
+            minOf(heightScale, widthScale).roundToInt()
+        }
+        return BitmapFactory.decodeFile(path, BitmapFactory.Options().apply{inSampleSize = sampleSize})
     }
 }
