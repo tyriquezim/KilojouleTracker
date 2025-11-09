@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -79,7 +81,7 @@ fun NavigationScreen(logMealViewModel: LogMealViewModel, settingsViewModel: Sett
         }
         composable(VIEW_LOGGED_MEALS_SCREEN_ROUTE)
         {
-            ViewLoggedMealsScreen(navigationController = navigationController, modifier = Modifier.fillMaxSize())
+            ViewLoggedMealsScreen(navigationController = navigationController, getBitmap, modifier = Modifier.fillMaxSize())
         }
         composable(DAILY_PROGRESS_SCREEN_ROUTE)
         {
@@ -195,7 +197,7 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
             }
             if(logMealViewModel.currentMealPhoto != null)
             {
-                Image(bitmap = getBitmap(logMealViewModel.currentMealPhoto!!.photoFileName, logMealViewModel.logMealScreenWidth, logMealViewModel.logMealScreenHeight).asImageBitmap(), contentDescription = "Captured Image")
+                Image(bitmap = getBitmap(logMealViewModel.currentMealPhoto!!.photoFileName, logMealViewModel.logMealScreenWidth, logMealViewModel.logMealScreenHeight).asImageBitmap(), contentDescription = "Captured Image", modifier = Modifier.clip(RoundedCornerShape(20.dp)))
             }
             Button(onClick =
             {
@@ -256,7 +258,7 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
                                         logMealViewModel.currentMealPhoto!!.mealOwnerId = loggedMeal!!.mealId
                                         KilojouleTrackerRepository.get().insertMealPhoto(logMealViewModel.currentMealPhoto!!)
                                         KilojouleTrackerRepository.get().insertMeal(loggedMeal!!)
-                                        logMealViewModel.numKilojoulesText = loggedMeal!!.numKilojoules.toString()
+                                        logMealViewModel.numKilojoulesText = String.format("%.2f", loggedMeal!!.numKilojoules)
                                         logMealViewModel.fatWeightText = loggedMeal!!.fatWeight.toString()
                                         logMealViewModel.carbohydrateWeightText = loggedMeal!!.carbohydrateWeight.toString()
                                         logMealViewModel.proteinWeightText = loggedMeal!!.proteinWeight.toString()
@@ -322,18 +324,53 @@ fun LogMealScreen(navigationController: NavHostController, logMealViewModel: Log
 }
 
 @Composable
-fun ViewLoggedMealsScreen(navigationController: NavHostController, modifier: Modifier = Modifier)
+fun ViewLoggedMealsScreen(navigationController: NavHostController, getBitmap: (fileName: String, destWidth: Int, destHeight: Int) -> android.graphics.Bitmap, modifier: Modifier = Modifier)
 {
+    var loggedMeals: List<Meal> by remember { mutableStateOf(ArrayList()) }
+    var loggedMealPhotos: List<MealPhoto> by remember {mutableStateOf(ArrayList())}
+
     Box(modifier = modifier)
     {
-        LazyColumn()
+        if(loggedMeals.isNotEmpty() && loggedMealPhotos.isNotEmpty())
         {
+            LazyColumn(modifier = modifier)
+            {
+                items(loggedMeals)
+                {
+                    meal ->
+                    lateinit var correspondingMealPhoto: MealPhoto
 
+                    for(loggedMealPhoto in loggedMealPhotos)
+                    {
+                        if(meal.mealId.equals(loggedMealPhoto.mealOwnerId))
+                        {
+                            correspondingMealPhoto = loggedMealPhoto
+                        }
+                    }
+                    Row(modifier = Modifier.padding(20.dp))
+                    {
+                        Image(bitmap = getBitmap(correspondingMealPhoto.photoFileName, 200,200).asImageBitmap(), contentDescription = "Logged Meal Display Photo" , modifier = Modifier.clip(RoundedCornerShape(20.dp)))
+                        Column()
+                        {
+
+                        }
+                    }
+                }
+            }
         }
         Button(onClick = { navigationController.navigate(HOME_SCREEN_ROUTE) }, modifier = Modifier.align(Alignment.BottomEnd))
         {
             Icon(painterResource(id = R.drawable.baseline_arrow_back_24), contentDescription = "Back Arrow", modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp))
             Text("Back")
+        }
+    }
+
+    LaunchedEffect(Unit)
+    {
+        KilojouleTrackerRepository.get().databaseMutex.withLock()
+        {
+            loggedMeals = KilojouleTrackerRepository.get().getMeals()
+            loggedMealPhotos = KilojouleTrackerRepository.get().getMealPhotos()
         }
     }
 }
@@ -362,11 +399,38 @@ fun DailyProgressScreen(navigationController: NavHostController, settingsViewMod
                 var totalCarbohydrates = KilojouleTrackerRepository.get().getTotalCarbohydrateWeight()
                 var totalProtein = KilojouleTrackerRepository.get().getTotalProteinWeight()
 
-                kilojouleProgressPercentage = goalKilojouleIntake / totalKilojoules.toFloat()
-                fatProgressPercentage = goalFatIntake / totalFat.toFloat()
-                carbohydrateProgressPercentage = goalCarbohydrateIntake / totalCarbohydrates.toFloat()
-                proteinProgressPercentage = goalProteinIntake / totalProtein.toFloat()
-
+                if(goalKilojouleIntake == 0.0f)
+                {
+                    kilojouleProgressPercentage = 0.0f
+                }
+                else
+                {
+                    kilojouleProgressPercentage = totalKilojoules.toFloat() / goalKilojouleIntake
+                }
+                if(goalFatIntake == 0.0f)
+                {
+                    fatProgressPercentage = 0.0f
+                }
+                else
+                {
+                    fatProgressPercentage = totalFat.toFloat() / goalFatIntake
+                }
+                if(goalCarbohydrateIntake == 0.0f)
+                {
+                    carbohydrateProgressPercentage = 0.0f
+                }
+                else
+                {
+                    carbohydrateProgressPercentage = totalCarbohydrates.toFloat() / goalCarbohydrateIntake
+                }
+                if(goalProteinIntake == 0.0f)
+                {
+                    proteinProgressPercentage = 0.0f
+                }
+                else
+                {
+                    proteinProgressPercentage = totalProtein.toFloat() / goalProteinIntake
+                }
             }
 
         }
