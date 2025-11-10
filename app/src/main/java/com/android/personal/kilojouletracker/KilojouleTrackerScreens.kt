@@ -350,11 +350,16 @@ fun ViewLoggedMealsScreen(navigationController: NavHostController, getBitmap: (f
                     Row(modifier = Modifier.padding(20.dp))
                     {
                         Image(bitmap = getBitmap(correspondingMealPhoto.photoFileName, 200,200).asImageBitmap(), contentDescription = "Logged Meal Display Photo" , modifier = Modifier.clip(RoundedCornerShape(20.dp)))
-                        Column()
+                        Column(modifier = Modifier.padding(20.dp))
                         {
-
+                            Text(text = "Meal Name: ${meal.mealName}")
+                            Text(text = "Kilojoules: ${meal.numKilojoules} ")
+                            Text(text = "Carbohydrates (g): ${meal.carbohydrateWeight}g")
+                            Text(text = "Fat (g): ${meal.fatWeight}g")
+                            Text(text = "Protein (g): ${meal.proteinWeight}g")
                         }
                     }
+                    HorizontalDivider(color = Color.Gray)
                 }
             }
         }
